@@ -13,28 +13,33 @@ weekday_mapping = {
 }
 
 bike_data['weekday'] = bike_data['weekday'].map(weekday_mapping)
-
 casual_sorted = bike_data.groupby(['season', 'weekday'])['casual'].sum().reset_index()
 
 st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
 st.sidebar.title("Bike Sharing Dashboard")
 st.sidebar.markdown("**By: Aulia Halimatusyaddiah MC319D5X2048**")
 st.sidebar.caption("Copywrite 2025")
-selected_date = st.sidebar.date_input("Pilih Tanggal:")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Trend Penggunaan Harian", "Hari Tertinggi", "Hari Populer", "Musim Populer", "Casual Populer"
 ])
 
 with tab1:
-    st.subheader("Penggunaan Sepeda per Hari (2011-2012)")
+    with st.container():
+        st.subheader("Pilih Bulan dan Tahun:")
+        bike_data['year_month'] = bike_data['dteday'].dt.to_period('M')
+        month_options = bike_data['year_month'].dt.strftime('%Y-%m').unique()
+        selected_month = st.selectbox("Pilih Bulan:", month_options)
+        filtered_data = bike_data[bike_data['year_month'].astype(str) == selected_month]
+    
+    st.subheader(f"Penggunaan Sepeda per Hari ({selected_month})")
     fig, ax = plt.subplots(figsize=(14, 6))
-    sns.lineplot(data=bike_data, x='dteday', y='casual', label='Casual', color='orange', alpha=0.5, ci=None)
-    sns.lineplot(data=bike_data, x='dteday', y='registered', label='Registered', color='yellow', alpha=0.65, ci=None)
-    sns.lineplot(data=bike_data, x='dteday', y='cnt', label='Total (cnt)', color='green', linewidth=2, ci=None)
+    sns.lineplot(data=filtered_data, x='dteday', y='casual', label='Casual', color='orange', alpha=0.5, ci=None)
+    sns.lineplot(data=filtered_data, x='dteday', y='registered', label='Registered', color='yellow', alpha=0.65, ci=None)
+    sns.lineplot(data=filtered_data, x='dteday', y='cnt', label='Total (cnt)', color='green', linewidth=2, ci=None)
     ax.set(title='Penggunaan Sepeda per Hari', xlabel='Tanggal', ylabel='Jumlah Pengguna Sepeda')
-    ax.xaxis.set_major_locator(mdates.MonthLocator())  
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))  
+    ax.xaxis.set_major_locator(mdates.DayLocator(interval=3))  
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  
     plt.xticks(rotation=45)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
